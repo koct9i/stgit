@@ -8,6 +8,7 @@ import sys
 import traceback
 
 from stgit import argparse, run, utils
+from stgit.commands.common import maybe_commit_id
 from stgit.compat import environ_get, fsdecode_utf8
 from stgit.config import config
 from stgit.out import out
@@ -40,6 +41,12 @@ class CommandAlias(object):
         self.options = []
 
     def func(self, args):
+        # '--' is usually followed by file paths
+        try:
+            delim = args.index('--')
+        except:
+            delim = len(args)
+        args = [maybe_commit_id(arg) for arg in args[:delim]] + args[delim:]
         cmd = ' '.join([self._command] + args).encode('utf-8')
         err = os.system(cmd)
         if err:

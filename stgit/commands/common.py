@@ -110,6 +110,27 @@ def git_commit(name, repository, branch_name=None):
         raise CmdException('%s: Unknown patch or revision name' % name)
 
 
+def maybe_commit_id(arg):
+    """Convert the given argument to a Git sha1 id or return it unchanged if
+    invalid.
+    """
+    directory = DirectoryHasRepository()
+    directory.setup()
+
+    def maybe_id(arg):
+        try:
+            return git_commit(arg, directory.repository).sha1
+        except:
+            return arg
+
+    # Check for options first and avoid converting them
+    if arg.startswith('-'):
+        return arg
+    pair = arg.split('..', 1)
+    pair = [maybe_id(a) for a in pair]
+    return '..'.join(pair)
+
+
 def color_diff_flags():
     """Return the git flags for coloured diff output if the configuration and
     stdout allows."""
