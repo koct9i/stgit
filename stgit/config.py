@@ -28,6 +28,7 @@ DEFAULTS = [
     ('i18n.commitencoding', ['UTF-8']),
     ('stgit.alias.add', ['git add']),
     ('stgit.alias.mv', ['git mv']),
+    ('stgit.alias.notes', ['git notes']),
     ('stgit.alias.resolved', ['git add']),
     ('stgit.alias.rm', ['git rm']),
     ('stgit.alias.status', ['git status -s']),
