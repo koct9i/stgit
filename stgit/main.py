@@ -40,10 +40,11 @@ class CommandAlias(object):
         self.options = []
 
     def func(self, args):
-        cmd = self._command.split() + args
-        p = run.Run(*cmd)
-        p.discard_exitcode().run()
-        return p.exitcode
+        cmd = ' '.join([self._command] + args).encode('utf-8')
+        err = os.system(cmd)
+        if err:
+            return utils.STGIT_COMMAND_ERROR
+        return utils.STGIT_SUCCESS
 
 
 def is_cmd_alias(cmd):
