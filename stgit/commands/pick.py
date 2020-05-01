@@ -91,13 +91,12 @@ def __pick_commit(stack, ref_stack, iw, commit, patchname, options):
 
     if options.name:
         patchname = options.name
-    elif patchname and options.revert:
-        patchname = 'revert-' + patchname
-
-    if patchname:
-        patchname = find_patch_name(patchname, stack.patches.exists)
     else:
-        patchname = make_patch_name(commit.data.message_str, stack.patches.exists)
+        if not patchname:
+            patchname = make_patch_name(commit.data.message_str, lambda p: False)
+        if options.revert:
+            patchname = 'revert-' + patchname
+    patchname = find_patch_name(patchname, stack.patches.exists)
 
     if options.parent:
         parent = git_commit(options.parent, repository, ref_stack.name)
