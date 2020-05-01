@@ -83,6 +83,10 @@ class CommandAlias(object):
         self.options = []
 
     def func(self, args):
+        if ('--help' in args):
+            print(self.help)
+            return utils.STGIT_SUCCESS
+
         # '--' is usually followed by file paths
         try:
             delim = args.index('--')
