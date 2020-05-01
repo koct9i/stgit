@@ -8,9 +8,7 @@ import sys
 import traceback
 
 from stgit import argparse, run, utils
-from stgit.commands.common import maybe_commit_id
 from stgit.compat import environ_get, fsdecode_utf8
-from stgit.config import config
 from stgit.out import out
 from stgit.pager import pager
 import stgit.commands
@@ -30,38 +28,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, see http://www.gnu.org/licenses/.
 """
-
-
-class CommandAlias(object):
-    def __init__(self, name, command):
-        self._command = command
-        self.__name__ = name
-        self.usage = ['<arguments>']
-        self.help = 'Alias for "%s <arguments>".' % self._command
-        self.options = []
-
-    def func(self, args):
-        # '--' is usually followed by file paths
-        try:
-            delim = args.index('--')
-        except:
-            delim = len(args)
-        args = [maybe_commit_id(arg) for arg in args[:delim]] + args[delim:]
-        cmd = ' '.join([self._command] + args).encode('utf-8')
-        err = os.system(cmd)
-        if err:
-            return utils.STGIT_COMMAND_ERROR
-        return utils.STGIT_SUCCESS
-
-
-def is_cmd_alias(cmd):
-    return isinstance(cmd, CommandAlias)
-
-
-def append_alias_commands(cmd_list):
-    for (name, command) in config.getstartswith('stgit.alias.'):
-        name = utils.strip_prefix('stgit.alias.', name)
-        cmd_list.append((name, CommandAlias(name, command), 'Alias commands', command))
 
 
 #
@@ -94,14 +60,14 @@ class Commands(dict):
 
     def __getitem__(self, key):
         cmd_mod = self.get(key) or self.get(self.canonical_cmd(key))
-        if is_cmd_alias(cmd_mod):
+        if stgit.commands.is_cmd_alias(cmd_mod):
             return cmd_mod
         else:
             return stgit.commands.get_command(cmd_mod)
 
 
 cmd_list = stgit.commands.get_commands()
-append_alias_commands(cmd_list)
+cmd_list += stgit.commands.get_aliases()
 commands = Commands((cmd, mod) for cmd, mod, _, _ in cmd_list)
 
 
@@ -150,7 +116,7 @@ def _main():
             sys.argv[0] += ' %s' % cmd
             command = commands[cmd]
             parser = argparse.make_option_parser(command)
-            if is_cmd_alias(command):
+            if stgit.commands.is_cmd_alias(command):
                 parser.remove_option('-h')
             pager(parser.format_help().encode())
         else:
@@ -173,7 +139,7 @@ def _main():
     del sys.argv[1]
 
     command = commands[cmd]
-    if is_cmd_alias(command):
+    if stgit.commands.is_cmd_alias(command):
         sys.exit(command.func(sys.argv[1:]))
 
     parser = argparse.make_option_parser(command)

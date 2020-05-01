@@ -3,7 +3,10 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import os
 
+from stgit import utils
+from stgit.commands.common import maybe_commit_id
 from stgit.compat import text
+from stgit.config import config
 
 __copyright__ = """
 Copyright (C) 2005, Catalin Marinas <catalin.marinas@gmail.com>
@@ -71,6 +74,40 @@ def get_commands(allow_cached=True):
         )
         for mod_name, mod in _find_commands()
     )
+
+
+class CommandAlias(object):
+    def __init__(self, name, command):
+        self._command = command
+        self.__name__ = name
+        self.kind = 'alias'
+        self.usage = ['<arguments>']
+        self.help = 'Alias for "%s <arguments>".' % self._command
+        self.options = []
+
+    def func(self, args):
+        # '--' is usually followed by file paths
+        try:
+            delim = args.index('--')
+        except:
+            delim = len(args)
+        args = [maybe_commit_id(arg) for arg in args[:delim]] + args[delim:]
+        cmd = ' '.join([self._command] + args).encode('utf-8')
+        err = os.system(cmd)
+        if err:
+            return utils.STGIT_COMMAND_ERROR
+        return utils.STGIT_SUCCESS
+
+
+def is_cmd_alias(cmd):
+    return isinstance(cmd, CommandAlias)
+
+
+def get_aliases():
+    for (name, command) in config.getstartswith('stgit.alias.'):
+        name = utils.strip_prefix('stgit.alias.', name)
+        cmd = CommandAlias(name, command)
+        yield (name, cmd, _kinds[cmd.kind], command)
 
 
 def py_commands(commands, f):
