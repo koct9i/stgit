@@ -314,6 +314,7 @@ def install():
 
 def write_bash_completion(f):
     commands = stgit.commands.get_commands(allow_cached=False)
+    commands += stgit.commands.get_aliases()
     r = [
         [
             """# -*- shell-script -*-

@@ -4,6 +4,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 
 from stgit import utils
+from stgit.argparse import patch_range
 from stgit.commands.common import maybe_commit_id
 from stgit.compat import text
 from stgit.config import config
@@ -24,11 +25,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, see http://www.gnu.org/licenses/.
 """
-
-
-def get_command(mod_name):
-    """Import and return the given command module."""
-    return __import__(__name__ + '.' + mod_name, globals(), locals(), ['*'])
 
 
 _kinds = [
@@ -83,6 +79,7 @@ class CommandAlias(object):
         self.kind = 'alias'
         self.usage = ['<arguments>']
         self.help = 'Alias for "%s <arguments>".' % self._command
+        self.args = [patch_range('applied_patches', 'unapplied_patches', 'hidden_patches')]
         self.options = []
 
     def func(self, args):
@@ -108,6 +105,13 @@ def get_aliases():
         name = utils.strip_prefix('stgit.alias.', name)
         cmd = CommandAlias(name, command)
         yield (name, cmd, _kinds[cmd.kind], command)
+
+
+def get_command(mod_name):
+    """Import and return the given command module."""
+    if (is_cmd_alias(mod_name)):
+        return mod_name
+    return __import__(__name__ + '.' + mod_name, globals(), locals(), ['*'])
 
 
 def py_commands(commands, f):
